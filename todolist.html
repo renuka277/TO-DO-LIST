@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced To-Do List App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; background: #1e1e1e; color: #fff; }
+    h1 { color: #00ff99; }
+    #task-form { margin-bottom: 20px; }
+    input[type="text"], input[type="date"] { padding: 10px; width: 200px; margin-right: 5px; }
+    select { padding: 10px; margin-right: 5px; }
+    button { padding: 10px 15px; margin-left: 5px; cursor: pointer; background: #00ff99; color: #000; border: none; border-radius: 4px; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 10px; background: #333; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
+    .completed { text-decoration: line-through; color: #999; }
+    .high { border-left: 5px solid #ff4d4d; }
+    .medium { border-left: 5px solid #ffd11a; }
+    .low { border-left: 5px solid #4dff4d; }
+   body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 50px 20px 20px 20px; /* Top padding for spacing */
+  background: #1e1e1e;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centers horizontally */
+}
+
+h1 {
+  color: #00ff99;
+  font-size: 50px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #00ff99, #00ccff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 30px;
+}
+
+#task-form, #search, #task-list {
+  width: 100%;
+  max-width: 600px; /* Controls the width */
+}
+
+#task-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+button[type="submit"] {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+
+  </style>
+</head>
+<body>
+
+  <h1>To-Do List</h1>
+
+  <form id="task-form">
+    <input type="text" id="task-input" placeholder="Enter a new task" required>
+    <input type="date" id="task-deadline">
+    <select id="task-priority">
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+    <button type="submit">Add Task</button>
+  </form>
+
+  <input type="text" id="search" placeholder="Search tasks..." onkeyup="filterTasks()">
+
+  <ul id="task-list"></ul>
+
+  <script>
+    const taskForm = document.getElementById('task-form');
+    const taskInput = document.getElementById('task-input');
+    const taskDeadline = document.getElementById('task-deadline');
+    const taskPriority = document.getElementById('task-priority');
+    const taskList = document.getElementById('task-list');
+    const searchInput = document.getElementById('search');
+
+    document.addEventListener('DOMContentLoaded', loadTasks);
+
+    taskForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const taskText = taskInput.value.trim();
+      const deadline = taskDeadline.value;
+      const priority = taskPriority.value;
+      if (taskText) {
+        addTask({ text: taskText, deadline, priority, completed: false });
+        saveTask({ text: taskText, deadline, priority, completed: false });
+        taskInput.value = '';
+        taskDeadline.value = '';
+        taskPriority.value = 'low';
+      }
+    });
+
+    function addTask(task) {
+      const li = document.createElement('li');
+      li.className = task.priority;
+      li.innerHTML = `
+        <span class="${task.completed ? 'completed' : ''}">${task.text} ${task.deadline ? '(Due: ' + task.deadline + ')' : ''}</span>
+        <div>
+          <button onclick="toggleComplete(this)">✔</button>
+          <button onclick="editTask(this)">✏️</button>
+          <button onclick="deleteTask(this)">❌</button>
+        </div>
+      `;
+      taskList.appendChild(li);
+    }
+
+    function toggleComplete(button) {
+      const span = button.parentElement.previousElementSibling;
+      span.classList.toggle('completed');
+      updateLocalStorage();
+    }
+
+    function deleteTask(button) {
+      const li = button.closest('li');
+      li.remove();
+      updateLocalStorage();
+    }
+
+    function editTask(button) {
+      const li = button.closest('li');
+      const span = li.querySelector('span');
+      const newTask = prompt('Edit your task:', span.textContent.split(' (Due')[0]);
+      if (newTask) {
+        span.textContent = newTask;
+        updateLocalStorage();
+      }
+    }
+
+    function saveTask(task) {
+      let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      tasks.push(task);
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function updateLocalStorage() {
+      const tasks = [];
+      taskList.querySelectorAll('li').forEach(li => {
+        const span = li.querySelector('span');
+        const text = span.textContent.split(' (Due')[0];
+        const deadline = span.textContent.match(/Due: (.+?)\)/);
+        tasks.push({
+          text,
+          deadline: deadline ? deadline[1] : '',
+          priority: li.className,
+          completed: span.classList.contains('completed')
+        });
+      });
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      tasks.forEach(task => addTask(task));
+    }
+
+    function filterTasks() {
+      const searchText = searchInput.value.toLowerCase();
+      document.querySelectorAll('#task-list li').forEach(li => {
+        const text = li.querySelector('span').textContent.toLowerCase();
+        li.style.display = text.includes(searchText) ? '' : 'none';
+      });
+    }
+  </script>
+
+</body>
+</html>
